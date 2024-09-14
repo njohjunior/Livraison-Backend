@@ -19,4 +19,5 @@ class Livreur extends Model
         'typeDeVehicule',
         'password'
     ];
+    
 }

@@ -26,50 +26,14 @@ class LivreurController extends Controller
         return response()->json(['message' => 'Livreur non trouvé'], 404);
     }
 
-    // Créer un nouveau livreur
-    public function store(Request $request)
-    {
-        // Validation des données
-        $validatedData = $request->validate([
-            'nom' => 'required|string|max:255|min:3',
-            'prenom' => 'required|string|max:255|min:3',
-            'email' => 'required|email|string|max:255|unique:livreurs,email|unique:users,email',
-            'adresse' => 'required|string|max:255',
-            'contact' => 'required|string|max:255',
-            'typeDeVehicule' => 'required|string|max:255',
-            'password' => 'required|string|min:8|confirmed'
-        ]);
-
-        // Hashage du mot de passe
-        $validatedData['password'] = Hash::make($validatedData['password']);
-
-        // Création du livreur
-        $livreur = Livreur::create($validatedData);
-
-        // Création de l'utilisateur associé
-        $user = User::create([
-            'nom' => $validatedData['nom'],
-            'email' => $validatedData['email'],
-            'role' => 'Livreur',
-            'password' => $validatedData['password']
-        ]);
-
-        // Génération du token
-        $token = $user->createToken('Livreur Token')->plainTextToken;
-
-        return response()->json([
-            "Livreur" => $livreur,
-            "status_code" => 200,
-            "token" => $token
-        ], 200);
-    }
+    
 
     // Mettre à jour les informations du livreur
     public function updateProfile(Request $request, $id)
     {
-        $livreur = Livreur::find($id);
+        $user = User::find($id);
 
-        if ($livreur) {
+        if ($user) {
             $validatedData = $request->validate([
                 'nom' => 'string|max:255|min:3|nullable',
                 'prenom' => 'string|max:255|min:3|nullable',
@@ -78,11 +42,11 @@ class LivreurController extends Controller
                 'typeDeVehicule' => 'string|max:255|nullable',
             ]);
 
-            $livreur->update($validatedData);
+            $user->update($validatedData);
 
-            $user = User::where('email', $livreur->email)->first();
-            if ($user && isset($validatedData['nom'])) {
-                $user->update(['nom' => $validatedData['nom']]);
+            $livreur = Livreur::where('email', $user->email)->first();
+            if ($user) {
+                $livreur->update($request->only('nom', 'prenom', 'adresse', 'contact', 'typeDeVehicule'));
             }
 
             return response()->json([

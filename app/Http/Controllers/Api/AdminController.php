@@ -15,43 +15,6 @@ class AdminController extends Controller
         return response()->json(Admin::all(), 200);
     }
 
-    public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'nom' => 'required|string|max:255|min:3',
-            'email' => 'required|email|string|max:255|unique:admins,email|unique:users,email',
-            'password' => 'required|string|min:7|confirmed'
-        ]);
-
-        // Hashage du mot de passe
-        $validatedData['password'] = Hash::make($validatedData['password']);
-
-        // Création de l'administrateur
-        $admin = Admin::create([
-            'nom' => $validatedData['nom'],
-            'email' => $validatedData['email'],
-            'role' => 'admin',
-            'password' => $validatedData['password'],
-        ]);
-
-        // Création de l'utilisateur dans la table users
-        $user = User::create([
-            'nom' => $validatedData['nom'],
-            'email' => $validatedData['email'],
-            'role' => 'admin',
-            'password' => $validatedData['password'],
-        ]);
-
-        // Génération du token
-        $token = $user->createToken('Admin Token')->plainTextToken;
-
-        return response()->json([
-            'Admin' => $admin,
-            'status_code' => 200,
-            'token' => $token
-        ], 200);
-    }
-
     public function delete($id)
     {
         $admin = Admin::find($id);

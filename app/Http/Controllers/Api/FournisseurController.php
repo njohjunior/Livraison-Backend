@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Fournisseur;
+use App\Models\Livreur;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class FournisseurController extends Controller
@@ -27,40 +30,133 @@ class FournisseurController extends Controller
         }
     }
 
-    // Création d'un nouveau fournisseur
-    public function store(Request $request)
+    //Obtenir la liste des livreurs créé par un fournisseur
+    public function hasLivreur()
     {
-        // Validation des données
-        $validatedData = $request->validate([
-            'nom' => 'required|string|max:255|min:3',
-            'email' => 'required|email|string|max:255|unique:fournisseurs,email|unique:users,email',
-            'adresse' => 'required|string',
-            'contact' => 'required|string|max:255',
-            'password' => 'required|string|min:7|confirmed'
-        ]);
+        try {
+            // Récupérer l'utilisateur authentifié
+            $fournisseur = Auth::user();
 
-        // Hashage du mot de passe
-        $validatedData['password'] = Hash::make($validatedData['password']);
+            // Récupérer le fournisseur à partir de son email dans la table fournisseur
+            $fournisseur = DB::table('fournisseurs')
+                ->select('id')
+                ->where('email', $fournisseur->email)
+                ->first();
 
-        // Création du fournisseur
-        $fournisseur = Fournisseur::create($validatedData);
+            if ($fournisseur) {
+                // Récupérer les livreurs associés au fournisseur
+                $livreurs = DB::table('fournisseur_livreurs')
+                    ->select('livreur_id')
+                    ->where('fournisseur_id', '=', $fournisseur->id)
+                    ->get();
 
-        // Création de l'utilisateur dans la table "users"
-        $user = User::create([
-            'nom' => $validatedData['nom'],
-            'email' => $validatedData['email'],
-            'role' => 'Fournisseur', 
-            'password' => $validatedData['password'],
-        ]);
+                // Vérifier si des livreurs existent
+                if ($livreurs->isEmpty()) {
+                    return response()->json([
+                        "message" => "Aucun livreur n'est associé à ce fournisseur."
+                    ], 200);
+                } else {
+                    // Récupérer les détails de tous les livreurs associés
+                    $livreursIds = $livreurs->pluck('livreur_id'); // Pluck IDs
+                    $livreursDetails = DB::table('livreurs')
+                        ->whereIn('id', $livreursIds)
+                        ->get();
 
-        $token = $user->createToken($request->nom)->plainTextToken;
-
-        return response()->json([
-            "fournisseur" => $fournisseur,
-            "Status Code" => 200,
-            "token" => $token
-        ] , 200);
+                    return response()->json([
+                        "message" => "Des livreurs sont associés à ce fournisseur.",
+                        "livreurs" => $livreursDetails
+                    ], 200);
+                }
+            } else {
+                return response()->json([
+                    "message" => "Fournisseur non authentifié."
+                ], 401);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                "message" => "Une erreur est survenue",
+                "error" => $e->getMessage()
+            ], 500);
+        }
     }
+
+
+    //Création d'un livreur par un fournisseur
+    public function createLivreur(Request $request)
+    {
+        try {
+            // Validation des champs
+            $validatedData = $request->validate([
+                'email' => 'required|email|string|max:255|unique:livreurs,email|unique:users,email',
+                'typeDeVehicule' => 'required|string|max:255',
+            ]);
+
+            // Générer le mot de passe basé sur l'email
+            $password = Hash::make($validatedData['email']);
+
+            // Création du livreur
+            $livreur = Livreur::create([
+                "nom" => "livreur",
+                "prenom" => "null",
+                "email" => $validatedData['email'],
+                "adresse" => "null",
+                "contact" => "null",
+                "typeDeVehicule" => $validatedData['typeDeVehicule'],
+                "password" => $password,
+            ]);
+
+            // Création de l'utilisateur associé
+            $user = User::create([
+                "nom" => "livreur",
+                "prenom" => "null",
+                "email" => $validatedData['email'],
+                'role' => 'Livreur',
+                "adresse" => "null",
+                "contact" => "null",
+                "typeDeVehicule" => $validatedData['typeDeVehicule'],
+                "password" => $password,
+            ]);
+
+            // Récupérer l'utilisateur authentifié
+            $fournisseur = Auth::user();
+
+            if (!$fournisseur) {
+                return response()->json([
+                    "message" => "Utilisateur non authentifié"
+                ], 401);
+            }
+
+            // Récupérer le fournisseur à partir de son email
+            $fournisseur = DB::table('fournisseurs')
+                ->select('id')
+                ->where('email', $fournisseur->email)
+                ->first();
+
+            if (!$fournisseur) {
+                return response()->json([
+                    "message" => "Fournisseur non trouvé"
+                ], 404);
+            }
+
+            // Ajouter une entrée dans la table fournisseur_livreurs pour établir la relation
+            DB::table('fournisseur_livreurs')->insert([
+                'fournisseur_id' => $fournisseur->id, // Utiliser l'ID du fournisseur
+                'livreur_id' => $livreur->id,         // Utiliser l'ID du livreur nouvellement créé
+            ]);
+
+            return response()->json([
+                "message" => "Livreur créé avec succès",
+                "livreur" => $livreur
+            ], 200);
+        } catch (\Exception $e) {
+            // Gestion des erreurs
+            return response()->json([
+                "message" => "Une erreur est survenue",
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     // Mise à jour du profil d'un fournisseur
     public function updateProfile(Request $request, $id)
@@ -69,15 +165,16 @@ class FournisseurController extends Controller
         if ($fournisseur) {
             $request->validate([
                 'nom' => 'string|max:255|min:3|nullable',
+                'prenom' => 'string|max:255|min:3|nullable',
                 'adresse' => 'string|nullable',
                 'contact' => 'string|max:255|nullable',
             ]);
 
-            $fournisseur->update($request->only('nom', 'adresse', 'contact'));
+            $fournisseur->update($request->only('nom', 'prenom', 'adresse', 'contact'));
 
             $user = User::where('email', $fournisseur->email)->first();
             if ($user) {
-                $user->update(['nom' => $request->nom]);
+                $user->update($request->only('nom', 'prenom', 'adresse', 'contact'));
             }
 
             return response()->json(['message' => 'Profil mis à jour avec succès', 'fournisseur' => $fournisseur], 200);

@@ -8,14 +8,16 @@ use Laravel\Sanctum\HasApiTokens;
 
 class Fournisseur extends Model
 {
-    use HasFactory,HasApiTokens;
+    use HasFactory, HasApiTokens;
 
     protected $table = 'fournisseurs';
     protected $fillable = [
         'nom',
+        'prenom',
         'email',
         'adresse',
         'contact',
         'password'
     ];
+
 }

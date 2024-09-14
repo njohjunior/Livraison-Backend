@@ -11,14 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fournisseurs', function (Blueprint $table) {
+        Schema::create('fournisseur_livreurs', function (Blueprint $table) {
             $table->id();
-            $table->string('nom');
-            $table->string('prenom');
-            $table->string('email');
-            $table->string('adresse');
-            $table->string('contact');
-            $table->string('password');
+            $table->foreignId('fournisseur_id')->constrained('fournisseurs')->onDelete('cascade');
+            $table->foreignId('livreur_id')->constrained('livreurs')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -28,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fournisseurs');
+        Schema::dropIfExists('fournisseur_livreurs');
     }
 };
