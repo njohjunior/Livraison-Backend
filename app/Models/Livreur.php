@@ -17,7 +17,9 @@ class Livreur extends Model
         'adresse',
         'contact',
         'typeDeVehicule',
-        'password'
+        'password',
+        'latitude',
+        'longitude'
     ];
     
 }

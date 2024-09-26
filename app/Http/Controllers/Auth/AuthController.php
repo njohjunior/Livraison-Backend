@@ -66,7 +66,9 @@ class AuthController extends Controller
                 'adresse' => 'required|string',
                 'contact' => 'required|string|max:255',
                 'password' => 'required|string|min:7|confirmed',
-                'typeDeVehicule' => 'nullable|string|max:50'
+                'typeDeVehicule' => 'nullable|string|max:50',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric'
             ]);
 
             // Hashage du mot de passe
@@ -162,7 +164,9 @@ class AuthController extends Controller
             'adresse' => 'required|string|max:255',
             'contact' => 'required|string|max:255',
             'typeDeVehicule' => 'required|string|max:255',
-            'password' => 'required|string|min:8|confirmed'
+            'password' => 'required|string|min:8|confirmed',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric'
         ]);
 
         // Hashage du mot de passe
@@ -174,8 +178,12 @@ class AuthController extends Controller
         // Création de l'utilisateur associé
         $user = User::create([
             'nom' => $validatedData['nom'],
+            'prenom' => $validatedData['prenom'],
             'email' => $validatedData['email'],
             'role' => 'Livreur',
+            'contact' => $validatedData['contact'],
+            'adresse' => $validatedData['adresse'],
+            'typeDeVehicule' => $validatedData['typeDeVehicule'],
             'password' => $validatedData['password']
         ]);
 

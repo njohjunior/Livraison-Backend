@@ -9,14 +9,18 @@ class Course extends Model
 {
     use HasFactory;
 
-    protected $tables = "courses";
-    protected $fillable = ([
+    protected $table = "courses";
+    protected $fillable = [
         "fournisseur_id",
         "titre",
         "description",
         "adresseRamassage",
         "adresseLivraison",
         "emailClient",
-        "typeDeCourse"
-    ]);
+        "typeDeCourse",
+        "latitudeRamassage",
+        "longitudeRamassage",
+        "latitudeLivraison",
+        "longitudeLivraison",
+    ];
 }

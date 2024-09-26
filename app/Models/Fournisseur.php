@@ -17,7 +17,9 @@ class Fournisseur extends Model
         'email',
         'adresse',
         'contact',
-        'password'
+        'password',
+        'latitude',
+        'longitude'
     ];
 
 }

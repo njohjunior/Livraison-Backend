@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('adresseLivraison');
             $table->string('emailClient');
             $table->enum('typeDeCourse', ['Normal', 'Express', 'Fragile']);
-            $table->string('statut')->default('Disponible'); // Disponible, Acceptée, Livrée
+            $table->string('statut')->default('Disponible');
             $table->timestamps();
 
             // Foreign keys

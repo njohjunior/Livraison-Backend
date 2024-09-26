@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\UserController;
+use App\Models\Course;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -34,9 +36,17 @@ Route::prefix('fournisseurs')->group(function () {
 
 //Routes de gestion des courses
 Route::prefix('courses')->group(function () {
+    Route::patch('/{id}/complete', [CourseController::class, 'completeCourse']);
+    Route::get('/course/{id}', [CourseController::class, "show"]);
+    Route::post('/store-from', [CourseController::class, "storeFrom"]);
     Route::middleware("auth:sanctum")->post('/create-course', [CourseController::class, 'store']);
     Route::middleware("auth:sanctum")->get('/', [CourseController::class, 'index']);
     Route::middleware('auth:sanctum')->post('/accept', [CourseController::class, 'acceptCourse']);
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/courses', [CourseController::class, 'mesCourses']);
+        Route::delete('/courses/{id}', [CourseController::class, 'destroy']);
+        Route::get('/has-course', [CourseController::class, 'hasCourse']);
+    });
 });
 
 //Route de gestion des Livreurs
