@@ -1,4 +1,4 @@
-<!-- resources/views/emails/course-created-html.blade.php -->
+
 <!DOCTYPE html>
 <html>
 <head>

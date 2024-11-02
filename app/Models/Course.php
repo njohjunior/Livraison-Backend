@@ -22,5 +22,6 @@ class Course extends Model
         "longitudeRamassage",
         "latitudeLivraison",
         "longitudeLivraison",
+        "duration"
     ];
 }

@@ -8,11 +8,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Mail\CourseCreated;
+use App\Mail\CourseTerminee;
 use App\Models\LivreurCourse;
 use Illuminate\Support\Facades\Mail;
 
 class CourseController extends Controller
 {
+    //Récupérer toutes les courses
+    public function AllCourses()
+    {
+        return response()->json(Course::all(), 200);
+    }
+
     //Récupérer les courses disponible (statut : disponibles)
     public function index()
     {
@@ -144,8 +151,6 @@ class CourseController extends Controller
         }
     }
 
-
-
     // Accepter une course
     public function acceptCourse(Request $request)
     {
@@ -198,6 +203,20 @@ class CourseController extends Controller
 
         return response()->json(['message' => 'Course acceptée avec succès.']);
     }
+
+    //Débuter une course 
+    public function startCourse($id)
+    {
+        $course = Course::find($id);
+        if ($course) {
+            $course->statut = 'En cours';
+            $course->save();
+            return response()->json(['message' => 'Course débutée avec succès.'], 200);
+        } else {
+            return response()->json(['message' => 'Course non trouvée.'], 404);
+        }
+    }
+
 
     // Courses créées par le fournisseur connecté
     public function mesCourses()
@@ -279,14 +298,32 @@ class CourseController extends Controller
     // Méthode pour terminer la course
     public function completeCourse($id)
     {
+        $course = Course::findOrFail($id);
+
+        // Mettre à jour le statut de la course en "terminée"
+        $course->statut = 'Terminée';
+        $course->save();
+
+        // Envoyer un email de confirmation au client
+        Mail::to($course->emailClient)->send(new CourseTerminee($course));
+
+        return response()->json(['message' => 'Course terminée et email envoyé.']);
+    }
+
+    // Confirmation de reception d'une course
+    public function confirmCourse($id)
+    {
+        // Recherche la course
         $course = Course::find($id);
-        if ($course) {
-            $course->statut = 'Terminée';
-            $course->save();
-            return response()->json(['message' => 'Course terminée avec succès.'], 200);
-        } else {
-            return response()->json(['message' => 'Course non trouvée.'], 404);
+
+        if (!$course) {
+            return response()->json(['message' => 'Course not found'], 404);
         }
+
+        $course->statut = 'Confirmée';
+        $course->save();
+
+        return response()->json(['message' => 'Course confirmed successfully']);
     }
 
     //suppression
@@ -327,4 +364,5 @@ class CourseController extends Controller
         $course = Course::find($id);
         return response()->json($course);
     }
+
 }

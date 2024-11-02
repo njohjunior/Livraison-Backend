@@ -12,6 +12,14 @@ use App\Models\Course;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DeliveryPositionController;
+
+//Routes gestions positions
+Route::post('/delivery-positions', [DeliveryPositionController::class, 'store']);
+Route::get('/delivery-positions/{courseId}', [DeliveryPositionController::class, 'show']);
+Route::delete('/delivery-positions/{id}', [DeliveryPositionController::class, 'destroy']);
+Route::get('/delivery-positions/{courseId}', [DeliveryPositionController::class, 'getFirstPosition']);
+
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -36,7 +44,10 @@ Route::prefix('fournisseurs')->group(function () {
 
 //Routes de gestion des courses
 Route::prefix('courses')->group(function () {
+    Route::get('all', [CourseController::class, 'AllCourses']);
+    Route::patch('/{id}/start', [CourseController::class, 'startCourse']);
     Route::patch('/{id}/complete', [CourseController::class, 'completeCourse']);
+    Route::patch('/{id}/confirm', [CourseController::class, 'confirmCourse']);
     Route::get('/course/{id}', [CourseController::class, "show"]);
     Route::post('/store-from', [CourseController::class, "storeFrom"]);
     Route::middleware("auth:sanctum")->post('/create-course', [CourseController::class, 'store']);

@@ -19,39 +19,51 @@ class AuthController extends Controller
     // Création d'un nouveau admin
     public function storeAdmin(Request $request)
     {
-        $validatedData = $request->validate([
-            'nom' => 'required|string|max:255|min:3',
-            'email' => 'required|email|string|max:255|unique:admins,email|unique:users,email',
-            'password' => 'required|string|min:7|confirmed'
-        ]);
+        try {
+            // Validation des données
+            $validatedData = $request->validate([
+                'nom' => 'required|string|max:255|min:3',
+                'prenom' => 'nullable|string|max:255',
+                'email' => 'required|email|string|max:255|unique:clients,email|unique:users,email',
+                'contact' => 'required|string|max:255',
+                'role' => 'nullable|string',
+                'password' => 'required|string|min:7|confirmed',
+                'adresse' => 'required|string|max:255',
+                'typeDeVehicule' => 'nullable|string|max:50'
+            ]);
 
-        // Hashage du mot de passe
-        $validatedData['password'] = Hash::make($validatedData['password']);
+            // Hashage du mot de passe
+            $validatedData['password'] = Hash::make($validatedData['password']);
 
-        // Création de l'administrateur
-        $admin = Admin::create([
-            'nom' => $validatedData['nom'],
-            'email' => $validatedData['email'],
-            'role' => 'admin',
-            'password' => $validatedData['password'],
-        ]);
+            // Création du client
+            $admin = Admin::create($validatedData);
 
-        // Création de l'utilisateur dans la table users
-        $user = User::create([
-            'nom' => $validatedData['nom'],
-            'email' => $validatedData['email'],
-            'role' => 'admin',
-            'password' => $validatedData['password'],
-        ]);
+            // Création de l'utilisateur
+            $user = User::create([
+                'nom' => $validatedData['nom'],
+                'prenom' => $validatedData['prenom'],
+                'email' => $validatedData['email'],
+                'role' => 'Admin',
+                'contact' => $validatedData['contact'],
+                'adresse' => null,
+                'typeDeVehicule' => null,
+                'password' => $validatedData['password']
+            ]);
 
-        // Génération du token
-        $token = $user->createToken('Admin Token')->plainTextToken;
+            // Génération du token
+            $token = $user->createToken($request->nom)->plainTextToken;
 
-        return response()->json([
-            'Admin' => $admin,
-            'status_code' => 200,
-            'token' => $token
-        ], 200);
+            return response()->json([
+                "Admin" => $admin,
+                "Status Code" => 200,
+                "token" => $token
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                "message" => "Une erreur est survenue",
+                "error" => $e->getMessage()
+            ], 500);
+        }
     }
 
     // Création d'un nouveau fournisseur
